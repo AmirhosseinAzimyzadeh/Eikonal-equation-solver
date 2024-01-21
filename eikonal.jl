@@ -1,4 +1,6 @@
 using DelimitedFiles
+# using GR
+using Plots
 
 # Student Name: Amirhossein Azimyzadeh
 # Student ID: 3761387
@@ -8,24 +10,33 @@ using DelimitedFiles
 function solveEikonal(ni, nj, h, source, tol = 1E-6)
     F = zeros(ni+2, nj+2) # Speed function
     U = fill(Inf, ni+2, nj+2) # Solution matrix
+    interations = 0
 
     initialize!(F, U, ni, nj, source) # Read input from file
 
     maxI = ni+1
     maxJ = nj+1
 
-    maxerr = 0.0
-    while maxerr < tol
-        maxerr = sweep!(U, 2, maxI, 2, maxJ, F, h, maxerr)
-        @show maxerr
-        maxerr = sweep!(U, maxI, 2, maxJ, 2, F, h, maxerr)
-        @show maxerr
-        maxerr = sweep!(U, 2, maxI, maxJ, 2, F, h, maxerr)
-        @show maxerr
-        maxerr = sweep!(U, maxI, 2, 2, maxJ, F, h, maxerr)
-        @show maxerr
+    maxerr = tol+1
+    while maxerr > tol
+        maxErrors = fill(0.0, 4)
+
+        maxErrors[1] = sweep!(U, maxI, 2, 2, maxJ, F, h, maxerr)
+        maxErrors[2] = sweep!(U, maxI, 2, maxJ, 2, F, h, maxerr)
+        maxErrors[3] = sweep!(U, 2, maxI, maxJ, 2, F, h, maxerr)
+        maxErrors[4] = sweep!(U, 2, maxI, 2, maxJ, F, h, maxerr)
+        
+        interations += 1
+
+        maxerr = maximum(maxErrors)
     end
-    return U
+
+    result = @view U[2:end-1, 2:end-1]
+
+    println("Number of iterations: ", interations, ", Max error: ", maxerr)
+    @show result
+
+    return result
 end
 
 # Perform one set of sweeps on matrix U using directions specified in 
@@ -37,19 +48,22 @@ end
 function sweep!(U, ia, ib, ja, jb, F, h, maxerr)
     stepi = ib < ia ? -1 : 1
     stepj = jb < ja ? -1 : 1
+
+    localMaxerr::Float64 = 0.0
+
     for j in ja:stepj:jb
         for i in ia:stepi:ib
             Unew = solveQuadratic(U, i, j, F, h)
-            err = (U[i, j]-Unew)/U[i, j]
-            if err > maxerr
-                maxerr = err
-            end
             if Unew < U[i, j]
+                err::Float64 = (U[i, j]-Unew)/U[i, j]
+                if err > localMaxerr
+                    localMaxerr = err
+                end
                 U[i, j] = Unew
             end
         end
     end
-    return maxerr
+    return localMaxerr
 end
 
 # Solve the discretized Eikonal equation at (i,j), given 
@@ -87,12 +101,17 @@ function initialize!(F, U, ni, nj, source)
     nothing
 end
 
-function main()
-    U = solveEikonal(7, 7, 1, "ex1.txt")
-    # Write U to file
-    writedlm("output.txt", U[2:end-1, 2:end-1])
-    
-    @show @view U[2:end-1, 2:end-1]
-end
 
-main()
+width = 100;
+filename = "test100.txt"
+h = 1
+U = solveEikonal(width, width, h, filename)
+
+heatmap(U)
+plot!(1:width,1:width,lw=2,legend=false,widen=false,tickdirection=:out)
+
+
+# Write U to file
+writedlm("output.txt", U)
+
+

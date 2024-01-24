@@ -34,7 +34,7 @@ function solveEikonal(ni, nj, h, source, tol = 1E-6)
     result = @view U[2:end-1, 2:end-1]
 
     println("Number of iterations: ", interations, ", Max error: ", maxerr)
-    @show result
+    # @show result;
 
     return result
 end
@@ -107,7 +107,8 @@ filename = "test100.txt"
 h = 1
 U = solveEikonal(width, width, h, filename)
 
-heatmap(U)
+heatmap!(U)
+plot(1:width,1:width)
 plot!(1:width,1:width,lw=2,legend=false,widen=false,tickdirection=:out)
 
 

@@ -1,16 +1,12 @@
 using DelimitedFiles
-# using GR
 using Plots
-
-# Student Name: Amirhossein Azimyzadeh
-# Student ID: 3761387
 
 
 # Solves the Eikonal equation using the Fast Sweeping Method
 function solveEikonal(ni, nj, h, source, tol = 1E-6)
     F = zeros(ni+2, nj+2) # Speed function
     U = fill(Inf, ni+2, nj+2) # Solution matrix
-    interations = 0
+    iterations = 0
 
     initialize!(F, U, ni, nj, source) # Read input from file
 
@@ -26,15 +22,16 @@ function solveEikonal(ni, nj, h, source, tol = 1E-6)
         maxErrors[3] = sweep!(U, 2, maxI, maxJ, 2, F, h, maxerr)
         maxErrors[4] = sweep!(U, 2, maxI, 2, maxJ, F, h, maxerr)
         
-        interations += 1
+        iterations += 1
 
         maxerr = maximum(maxErrors)
     end
 
     result = @view U[2:end-1, 2:end-1]
 
-    println("Number of iterations: ", interations, ", Max error: ", maxerr)
-    # @show result;
+    println("Number of iterations: ", iterations, ", Max error: ", maxerr)
+    # Uncomment the following line to show the result
+    # @show result
 
     return result
 end
@@ -103,16 +100,8 @@ end
 
 
 width = 100;
-filename = "test100.txt"
+filename = "test100_extra.txt"
 h = 1
 U = solveEikonal(width, width, h, filename)
 
-heatmap!(U)
-plot(1:width,1:width)
-plot!(1:width,1:width,lw=2,legend=false,widen=false,tickdirection=:out)
-
-
-# Write U to file
-writedlm("output.txt", U)
-
-
+# Use heatmap(U) "heatmap(U)"
